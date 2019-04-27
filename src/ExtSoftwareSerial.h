@@ -1,7 +1,7 @@
 /*
-SoftwareSerial.h
+ExtSoftwareSerial.h
 
-SoftwareSerial.cpp - Implementation of the Arduino software serial for ESP8266/ESP32.
+ExtSoftwareSerial.cpp - Implementation of the Arduino software serial for ESP8266/ESP32.
 Copyright (c) 2015-2016 Peter Lerup. All rights reserved.
 Copyright (c) 2018-2019 Dirk O. Kaar. All rights reserved.
 
@@ -21,8 +21,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-#ifndef SoftwareSerial_h
-#define SoftwareSerial_h
+#ifndef ExtSoftwareSerial_h
+#define ExtSoftwareSerial_h
 
 #include <inttypes.h>
 #include <Stream.h>
@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // If only one tx or rx wanted then use this as parameter for the unused pin
 constexpr int SW_SERIAL_UNUSED_PIN = -1;
 
-enum SoftwareSerialConfig {
+enum ExtSoftwareSerialConfig {
 	SWSERIAL_5N1 = 0,
 	SWSERIAL_6N1,
 	SWSERIAL_7N1,
@@ -43,21 +43,21 @@ enum SoftwareSerialConfig {
 // the constructor however has an optional rx buffer size.
 // Baudrates up to 115200 can be used.
 
-class SoftwareSerial : public Stream {
+class ExtSoftwareSerial : public Stream {
 public:
-	SoftwareSerial(int receivePin, int transmitPin, bool inverse_logic = false, int bufSize = 64, int isrBufSize = 0);
-	virtual ~SoftwareSerial();
+	ExtSoftwareSerial(int receivePin, int transmitPin, bool inverse_logic = false, int bufSize = 64, int isrBufSize = 0);
+	virtual ~ExtSoftwareSerial();
 #ifndef ESP32
-	// Returns false if more than SOFTWARESERIAL_MAX_INSTS instances are started
+	// Returns false if more than ExtSoftwareSerial_MAX_INSTS instances are started
 	bool begin(int32_t baud) {
 		return begin(baud, SWSERIAL_8N1);
 	}
-	bool begin(int32_t baud, SoftwareSerialConfig config);
+	bool begin(int32_t baud, ExtSoftwareSerialConfig config);
 #else
 	void begin(int32_t baud) {
 		begin(baud, SWSERIAL_8N1);
 	}
-	void begin(int32_t baud, SoftwareSerialConfig config);
+	void begin(int32_t baud, ExtSoftwareSerialConfig config);
 #endif
 	int32_t baudRate();
 	// Transmit control pin
@@ -80,7 +80,7 @@ public:
 	// One wire control
 	void enableTx(bool on);
 
-	static void rxRead(SoftwareSerial* self);
+	static void rxRead(ExtSoftwareSerial* self);
 
 	// AVR compatibility methods
 	bool listen() { enableRx(true); return true; }

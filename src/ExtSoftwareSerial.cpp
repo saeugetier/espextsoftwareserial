@@ -1,6 +1,6 @@
 /*
 
-SoftwareSerial.cpp - Implementation of the Arduino software serial for ESP8266/ESP32.
+ExtSoftwareSerial.cpp - Implementation of the Arduino software serial for ESP8266/ESP32.
 Copyright (c) 2015-2016 Peter Lerup. All rights reserved.
 Copyright (c) 2018-2019 Dirk O. Kaar. All rights reserved.
 
@@ -22,19 +22,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <Arduino.h>
 
-#include <SoftwareSerial.h>
+#include <ExtSoftwareSerial.h>
 
 #ifndef ESP32
-#ifndef SOFTWARESERIAL_MAX_INSTS
-#define SOFTWARESERIAL_MAX_INSTS 8
+#ifndef ExtSoftwareSerial_MAX_INSTS
+#define ExtSoftwareSerial_MAX_INSTS 8
 #endif
 
 // As the ESP8266 Arduino attachInterrupt has no parameter, lists of objects
 // and callbacks corresponding to each possible list index have to be defined
-static SoftwareSerial* ObjList[SOFTWARESERIAL_MAX_INSTS];
+static ExtSoftwareSerial* ObjList[ExtSoftwareSerial_MAX_INSTS];
 
 template<int I> void ICACHE_RAM_ATTR sws_isr() {
-	SoftwareSerial::rxRead(ObjList[I]);
+	ExtSoftwareSerial::rxRead(ObjList[I]);
 }
 
 template <int N, int I = N - 1> class ISRTable : public ISRTable<N, I - 1> {
@@ -53,12 +53,12 @@ template <int N, int I>	const int ISRTable<N, I>::dummy =
 
 template <int N> void (*ISRTable<N, -1>::array[N])();
 
-template class ISRTable<SOFTWARESERIAL_MAX_INSTS>;
+template class ISRTable<ExtSoftwareSerial_MAX_INSTS>;
 
-static void (*(*ISRList))() = ISRTable<SOFTWARESERIAL_MAX_INSTS>::array;
+static void (*(*ISRList))() = ISRTable<ExtSoftwareSerial_MAX_INSTS>::array;
 #endif
 
-SoftwareSerial::SoftwareSerial(
+ExtSoftwareSerial::ExtSoftwareSerial(
 	int receivePin, int transmitPin, bool inverse_logic, int bufSize, int isrBufSize) {
 	m_isrBuffer = 0;
 	m_isrOverflow = false;
@@ -83,7 +83,7 @@ SoftwareSerial::SoftwareSerial(
 	}
 }
 
-SoftwareSerial::~SoftwareSerial() {
+ExtSoftwareSerial::~ExtSoftwareSerial() {
 	end();
 	if (m_buffer) {
 		free(m_buffer);
@@ -93,7 +93,7 @@ SoftwareSerial::~SoftwareSerial() {
 	}
 }
 
-bool SoftwareSerial::isValidGPIOpin(int pin) {
+bool ExtSoftwareSerial::isValidGPIOpin(int pin) {
 #ifdef ESP8266
 	return (pin >= 0 && pin <= 5) || (pin >= 12 && pin <= 15);
 #endif
@@ -104,7 +104,7 @@ bool SoftwareSerial::isValidGPIOpin(int pin) {
 }
 
 #ifndef ESP32
-bool SoftwareSerial::begin(int32_t baud, SoftwareSerialConfig config) {
+bool ExtSoftwareSerial::begin(int32_t baud, ExtSoftwareSerialConfig config) {
 	if (m_swsInstsIdx < 0)
 		for (size_t i = 0; i < (sizeof ObjList / sizeof ObjList[0]); ++i)
 		{
@@ -116,7 +116,7 @@ bool SoftwareSerial::begin(int32_t baud, SoftwareSerialConfig config) {
 		}
 	if (m_swsInstsIdx < 0) return false;
 #else
-	void SoftwareSerial::begin(int32_t baud, SoftwareSerialConfig config) {
+	void ExtSoftwareSerial::begin(int32_t baud, ExtSoftwareSerialConfig config) {
 #endif
 	m_dataBits = 5 + (config % 4);
 	m_bitCycles = ESP.getCpuFreqMHz() * 1000000 / baud;
@@ -139,7 +139,7 @@ bool SoftwareSerial::begin(int32_t baud, SoftwareSerialConfig config) {
 #endif
 }
 
-void SoftwareSerial::end()
+void ExtSoftwareSerial::end()
 {
 	enableRx(false);
 #ifndef ESP32
@@ -150,11 +150,11 @@ void SoftwareSerial::end()
 #endif
 }
 
-int32_t SoftwareSerial::baudRate() {
+int32_t ExtSoftwareSerial::baudRate() {
 	return ESP.getCpuFreqMHz() * 1000000 / m_bitCycles;
 }
 
-void SoftwareSerial::setTransmitEnablePin(int transmitEnablePin) {
+void ExtSoftwareSerial::setTransmitEnablePin(int transmitEnablePin) {
 	if (isValidGPIOpin(transmitEnablePin)) {
 		m_txEnableValid = true;
 		m_txEnablePin = transmitEnablePin;
@@ -165,11 +165,11 @@ void SoftwareSerial::setTransmitEnablePin(int transmitEnablePin) {
 	}
 }
 
-void SoftwareSerial::enableIntTx(bool on) {
+void ExtSoftwareSerial::enableIntTx(bool on) {
 	m_intTxEnabled = on;
 }
 
-void SoftwareSerial::enableTx(bool on) {
+void ExtSoftwareSerial::enableTx(bool on) {
 	if (m_txValid && m_oneWire) {
 		if (on) {
 			enableRx(false);
@@ -182,7 +182,7 @@ void SoftwareSerial::enableTx(bool on) {
 	}
 }
 
-void SoftwareSerial::enableRx(bool on) {
+void ExtSoftwareSerial::enableRx(bool on) {
 	if (m_rxValid) {
 		if (on) {
 			m_rxCurBit = m_dataBits;
@@ -198,7 +198,7 @@ void SoftwareSerial::enableRx(bool on) {
 	}
 }
 
-int SoftwareSerial::read() {
+int ExtSoftwareSerial::read() {
 	if (!m_rxValid) { return -1; }
 	if (m_inPos == m_outPos) {
 		rxBits();
@@ -209,7 +209,7 @@ int SoftwareSerial::read() {
 	return ch;
 }
 
-int SoftwareSerial::available() {
+int ExtSoftwareSerial::available() {
 	if (!m_rxValid) { return 0; }
 	rxBits();
 	int avail = m_inPos - m_outPos;
@@ -223,7 +223,7 @@ int SoftwareSerial::available() {
 	return avail;
 }
 
-void ICACHE_RAM_ATTR SoftwareSerial::preciseDelay(uint32_t deadline, bool asyn) {
+void ICACHE_RAM_ATTR ExtSoftwareSerial::preciseDelay(uint32_t deadline, bool asyn) {
 	// Reenable interrupts while delaying to avoid other tasks piling up
 	if (asyn && !m_intTxEnabled) { interrupts(); }
 	int32_t micro_s = static_cast<int32_t>(deadline - ESP.getCycleCount()) / ESP.getCpuFreqMHz();
@@ -240,7 +240,7 @@ void ICACHE_RAM_ATTR SoftwareSerial::preciseDelay(uint32_t deadline, bool asyn) 
 	}
 }
 
-void ICACHE_RAM_ATTR SoftwareSerial::writePeriod(uint32_t dutyCycle, uint32_t offCycle, bool withStopBit) {
+void ICACHE_RAM_ATTR ExtSoftwareSerial::writePeriod(uint32_t dutyCycle, uint32_t offCycle, bool withStopBit) {
 	if (dutyCycle) {
 		digitalWrite(m_txPin, HIGH);
 		m_periodDeadline += dutyCycle;
@@ -253,11 +253,11 @@ void ICACHE_RAM_ATTR SoftwareSerial::writePeriod(uint32_t dutyCycle, uint32_t of
 	}
 }
 
-size_t SoftwareSerial::write(uint8_t b) {
+size_t ExtSoftwareSerial::write(uint8_t b) {
 	return write(&b, 1);
 }
 
-size_t ICACHE_RAM_ATTR SoftwareSerial::write(const uint8_t *buffer, size_t size) {
+size_t ICACHE_RAM_ATTR ExtSoftwareSerial::write(const uint8_t *buffer, size_t size) {
 	if (m_rxValid) { rxBits(); }
 	if (!m_txValid) { return 0; }
 
@@ -305,24 +305,24 @@ size_t ICACHE_RAM_ATTR SoftwareSerial::write(const uint8_t *buffer, size_t size)
 	return size;
 }
 
-void SoftwareSerial::flush() {
+void ExtSoftwareSerial::flush() {
 	m_inPos = m_outPos = 0;
 	m_isrInPos.store(0);
 	m_isrOutPos.store(0);
 }
 
-bool SoftwareSerial::overflow() {
+bool ExtSoftwareSerial::overflow() {
 	bool res = m_overflow;
 	m_overflow = false;
 	return res;
 }
 
-int SoftwareSerial::peek() {
+int ExtSoftwareSerial::peek() {
 	if (!m_rxValid || (rxBits(), m_inPos == m_outPos)) { return -1; }
 	return m_buffer[m_outPos];
 }
 
-void SoftwareSerial::rxBits() {
+void ExtSoftwareSerial::rxBits() {
 	int avail = m_isrInPos.load() - m_isrOutPos.load();
 	if (avail < 0) { avail += m_isrBufSize; }
 	if (m_isrOverflow.load()) {
@@ -406,7 +406,7 @@ void SoftwareSerial::rxBits() {
 	}
 }
 
-void ICACHE_RAM_ATTR SoftwareSerial::rxRead(SoftwareSerial* self) {
+void ICACHE_RAM_ATTR ExtSoftwareSerial::rxRead(ExtSoftwareSerial* self) {
 	uint32_t curCycle = ESP.getCycleCount();
 	bool level = digitalRead(self->m_rxPin);
 
@@ -421,11 +421,11 @@ void ICACHE_RAM_ATTR SoftwareSerial::rxRead(SoftwareSerial* self) {
 	}
 }
 
-void SoftwareSerial::onReceive(std::function<void(int available)> handler) {
+void ExtSoftwareSerial::onReceive(std::function<void(int available)> handler) {
 	receiveHandler = handler;
 }
 
-void SoftwareSerial::perform_work() {
+void ExtSoftwareSerial::perform_work() {
 	if (!m_rxValid) { return; }
 	rxBits();
 	if (receiveHandler) {
